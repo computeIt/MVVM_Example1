@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         mMainActivityViewModel = ViewModelProviders.of(this).get(MainActivityViewModel.class);
         //Для получения ссылки на наш экземпляр ViewModel мы должны воспользоваться ViewModelProviders
 
+        mMainActivityViewModel.init();
         //чтобы подписаться на изменения наших данных, используем следующую конструкцию
         //this ниже - это активити, к жизненному циклу которой мы привязываемся
         mMainActivityViewModel.getNicePlaces().observe(this, new Observer<List<NicePlace>>() {
@@ -52,24 +53,46 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mMainActivityViewModel.getIsUpdating().observe(this, new Observer<Boolean>() {
+            //тут мы подписываемся на изменения в случае, если чтото добавляется в список
+            @Override
+            public void onChanged(@Nullable Boolean aBoolean) {
+                if (aBoolean) {
+                    showProgressBar();
+                } else {
+                    hideProgressBar();
+                    mRecyclerView.smoothScrollToPosition(mMainActivityViewModel.getNicePlaces().getValue().size() - 1);
+                    //тк мы добавляем в конец списка, то и прокручиваем потом список до конца
+                }
+            }
+        });
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                mMainActivityViewModel.addNewValue(new NicePlace(//добавим по кнопке еще одну позицию в список(хардкод :-()
+                        "https://i.imgur.com/ZcLLrkY.jpg",
+                        "Washington"
+                ));
             }
         });
-        
+
         initRecyclerView();
     }
 
-    private void initRecyclerView(){
+    private void initRecyclerView() {
         mAdapter = new RecyclerAdapter(this, mMainActivityViewModel.getNicePlaces().getValue());
         RecyclerView.LayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(linearLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
     }
-    private void showProgressBar(){mProgressbBar.setVisibility(View.VISIBLE);}
-    private void hideProgressBar(){mProgressbBar.setVisibility(View.GONE);}
+
+    private void showProgressBar() {
+        mProgressbBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideProgressBar() {
+        mProgressbBar.setVisibility(View.GONE);
+    }
 
 }
